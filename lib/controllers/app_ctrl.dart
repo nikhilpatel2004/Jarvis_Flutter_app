@@ -1,4 +1,4 @@
-import 'dart:async';
+﻿import 'dart:async';
 
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
@@ -143,7 +143,7 @@ class AppCtrl extends ChangeNotifier {
       return;
     }
 
-    _logger.info('Starting session connection…');
+    _logger.info('Starting session connectionâ€¦');
     isSessionStarting = true;
     notifyListeners();
 

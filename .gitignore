@@ -4,15 +4,15 @@
 .dart_tool/
 .packages
 build/
-# If you're building an application, you may want to check-in your pubspec.lock
-pubspec.lock
+# Keep pubspec.lock checked in for reproducible builds.
 
 # Directory created by dartdoc
 # If you don't generate documentation locally you can remove this line.
 doc/api/
 
-# dotenv environment variables file
+# dotenv environment variables file (secrets — never commit)
 .env*
+!assets/.env.example
 
 # Avoid committing generated Javascript files:
 *.dart.js
@@ -31,3 +31,17 @@ doc/api/
 
 .idea/
 *.iml
+
+# Android / Gradle build outputs and local machine config
+android/.gradle/
+android/build/
+android/app/build/
+android/local.properties
+android/key.properties
+*.apk
+*.aab
+
+# iOS / macOS generated build files
+**/Flutter/ephemeral/
+**/DerivedData/
+*.ipa
