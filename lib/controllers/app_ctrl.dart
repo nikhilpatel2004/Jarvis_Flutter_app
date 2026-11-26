@@ -8,8 +8,6 @@ import 'package:logging/logging.dart';
 import 'package:uuid/uuid.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 
-final String homepageAgentTokenEndpoint = 'https://livekit.com/api/homepage-agent/token';
-
 enum AppScreenState { welcome, agent }
 
 enum AgentScreenState { visualizer, transcription }
@@ -48,14 +46,34 @@ class AppCtrl extends ChangeNotifier {
       );
     }
 
-    final sandboxId = dotenv.env['LIVEKIT_SANDBOX_ID']?.replaceAll('"', '');
+    // HTTPS token endpoint (NOT the wss:// LiveKit server URL). The endpoint
+    // returns the correct server_url for this project at runtime.
+    const defaultTokenEndpoint =
+        'https://cloud-api.livekit.io/api/v2/sandbox/connection-details';
+
+    final sandboxId = dotenv.env['LIVEKIT_SANDBOX_ID']?.replaceAll('"', '').trim();
     final agentName = dotenv.env['LIVEKIT_AGENT_NAME']?.replaceAll('"', '').trim();
     final agentDeployment = dotenv.env['LIVEKIT_AGENT_DEPLOYMENT']?.replaceAll('"', '').trim();
-    sdk.EndpointTokenSource tokenSource;
-    if (sandboxId == null || sandboxId.isEmpty || sandboxId == '<your-sandbox-id>') {
-      tokenSource = sdk.EndpointTokenSource(url: Uri.parse(homepageAgentTokenEndpoint));
+    final customEndpoint = dotenv.env['LIVEKIT_TOKEN_ENDPOINT']?.replaceAll('"', '').trim();
+
+    sdk.TokenSourceConfigurable tokenSource;
+    if (customEndpoint != null && customEndpoint.isNotEmpty) {
+      // Optional override: your own HTTPS token server endpoint.
+      tokenSource = sdk.EndpointTokenSource(url: Uri.parse(customEndpoint));
+    } else if (sandboxId == null || sandboxId.isEmpty || sandboxId == '<your-sandbox-id>') {
+      // Fail with a clear message instead of falling back to a demo endpoint.
+      tokenSource = sdk.CustomTokenSource((_) async {
+        throw StateError(
+          'LIVEKIT_SANDBOX_ID is missing in assets/.env. Copy assets/.env.example '
+          'to assets/.env and set the token server ID from LiveKit Cloud '
+          '(Project Settings -> Development token server).',
+        );
+      });
     } else {
-      tokenSource = sdk.DevelopmentTokenSource(id: sandboxId);
+      tokenSource = sdk.EndpointTokenSource(
+        url: Uri.parse(defaultTokenEndpoint),
+        headers: {'X-Sandbox-ID': sandboxId},
+      );
     }
 
     return sdk.Session.fromConfigurableTokenSource(
